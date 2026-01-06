@@ -1,0 +1,81 @@
+name: Build Docker Image
+
+on:
+  # push:
+  #   branches: ["dev", "staging", "main", "feature/cicd"]
+  pull_request:
+    branches: ["dev", "staging", "main"]
+
+# Please set action secret and variables
+# secrets:
+# REGISTRY_USERNAME
+# REGISTRY_PASSWORD
+# CACHE_RESGISTRY
+# READ_REPO_USER
+# READ_REPO_TOKEN
+#
+env:
+  CACHE_REGISTRY: ${{ secrets.CACHE_REGISTRY }}
+  REGISTRY: ${{ secrets.REGISTRY }}
+  DOCKER_IMAGE_NAME: ${{github.event.repository.name}}
+  CONFIG_REPO: ${ secrets.CONFIG_REPO } # PAT with access to config repo
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      image_tag: ${{ steps.tag.outputs.tag }} # Pass the tag to the next job
+      ref_name: ${{ steps.output_env.outputs.CI_COMMIT_REF_NAME }} # Pass the tag to the next job
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Create Docker buildx environment
+        run: docker buildx create --use --platform=linux/arm64,linux/amd64 --name multi-platform-builder
+
+      - name: Bootstrap Docker buildx environment
+        run: docker buildx inspect --bootstrap
+
+      - name: Set Docker buildx environment
+        run: export DOCKER_DEFAULT_PLATFORM=linux/arm64
+
+      - name: Set outputs
+        id: output_env
+        env:
+          ref_name: "${{github.ref_name}}"
+        run: |
+          echo "CI_COMMIT_SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+          echo "CI_COMMIT_REF_NAME=${ref_name/\//-}" >> $GITHUB_ENV
+          echo "CI_COMMIT_REF_NAME=${ref_name/\//-}" >> $GITHUB_OUTPUT
+          echo "OWNER=${{github.repository_owner}}" >> $GITHUB_ENV
+
+      - name: Generate Image Tag
+        id: tag
+        run: |
+          export DOCKER_TAG=$(date +%Y-%m-%d---%H-%M-%S)-${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHORT_SHA}
+          echo "tag=$DOCKER_TAG" >> $GITHUB_OUTPUT 
+          echo "DOCKER_TAG=$DOCKER_TAG" >> $GITHUB_ENV
+          echo "${DOCKER_TAG}"
+
+      - name: Log in to Docker registry
+        run: |
+          echo "docker login -u ${{ secrets.REGISTRY_USERNAME }} ${REGISTRY}"
+          docker login -u ${{ secrets.REGISTRY_USERNAME }} -p ${{ secrets.REGISTRY_PASSWORD }} ${REGISTRY}
+
+      - name: Build and push Docker image
+        env:  # This is REQUIRED
+          READ_REPO_USER: ${{ secrets.READ_REPO_USER }}
+          READ_REPO_TOKEN: ${{ secrets.READ_REPO_TOKEN }}
+        run: |
+          docker buildx build \
+            --platform ${{ contains(fromJSON('["staging", "main", "production"]'), github.ref_name) && 'linux/amd64,linux/arm64' || 'linux/amd64' }}\
+            --tag ${REGISTRY}/${OWNER}/${DOCKER_IMAGE_NAME}:${DOCKER_TAG} \
+            --cache-from type=registry,ref=${CACHE_REGISTRY}/${OWNER}/${DOCKER_IMAGE_NAME}:${CI_COMMIT_REF_NAME}-build_cache\
+            --cache-to type=registry,ref=${CACHE_REGISTRY}/${OWNER}/${DOCKER_IMAGE_NAME}:${CI_COMMIT_REF_NAME}-build_cache,mode=max \
+            --load \
+            --secret id=read_repo_user,env=READ_REPO_USER \
+            --secret id=read_repo_token,env=READ_REPO_TOKEN \
+            -f Dockerfile \
+            .

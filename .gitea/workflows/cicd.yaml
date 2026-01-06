@@ -1,0 +1,132 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches: ["dev", "staging", "main", "ci/test-cicd"]
+  # pull_request:
+  #   branches: ["main"]
+
+# Please set action secret and variables
+# secrets:
+# REGISTRY_USERNAME
+# REGISTRY_PASSWORD
+# CONFIG_REPO_TOKEN
+# CACHE_RESGISTRY
+# REGISTRY
+# CONFIG_REPO
+# GITEA_READ_REPO_USER
+# GITEA_READ_REPO_TOKEN
+#
+env:
+  CACHE_REGISTRY: ${{ secrets.CACHE_REGISTRY }}
+  REGISTRY: ${{ secrets.REGISTRY }}
+  DOCKER_IMAGE_NAME: ${{github.event.repository.name}}
+  CONFIG_REPO: ${ secrets.CONFIG_REPO } # PAT with access to config repo
+  READ_REPO_USER: ${{ secrets.READ_REPO_USER }}
+  READ_REPO_TOKEN: ${{ secrets.READ_REPO_TOKEN }}
+
+jobs:
+  build-and-push:
+    name: Build and Push Application
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      image_tag: ${{ steps.tag.outputs.tag }} # Pass the tag to the next job
+      ref_name: ${{ steps.output_env.outputs.CI_COMMIT_REF_NAME }} # Pass the tag to the next job
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+
+      - name: Create Docker buildx environment
+        run: docker buildx create --use --platform=linux/arm64,linux/amd64 --name multi-platform-builder
+
+      - name: Bootstrap Docker buildx environment
+        run: docker buildx inspect --bootstrap
+
+      - name: Set Docker buildx environment
+        run: export DOCKER_DEFAULT_PLATFORM=linux/arm64
+
+      - name: Set outputs
+        id: output_env
+        env:
+          ref_name: "${{github.ref_name}}"
+        run: |
+          echo "CI_COMMIT_SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_ENV
+          echo "CI_COMMIT_REF_NAME=${ref_name/\//-}" >> $GITHUB_ENV
+          echo "CI_COMMIT_REF_NAME=${ref_name/\//-}" >> $GITHUB_OUTPUT
+          echo "OWNER=${{github.repository_owner}}" >> $GITHUB_ENV
+
+      - name: Generate Image Tag
+        id: tag
+        run: |
+          export DOCKER_TAG=$(date +%Y-%m-%d---%H-%M-%S)-${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHORT_SHA}
+          echo "tag=$DOCKER_TAG" >> $GITHUB_OUTPUT 
+          echo "DOCKER_TAG=$DOCKER_TAG" >> $GITHUB_ENV
+          echo "${DOCKER_TAG}"
+
+      - name: Log in to Docker registry
+        run: |
+          echo "docker login -u ${{ secrets.REGISTRY_USERNAME }} ${REGISTRY}"
+          docker login -u ${{ secrets.REGISTRY_USERNAME }} -p ${{ secrets.REGISTRY_PASSWORD }} ${REGISTRY}
+
+      - name: Build and push Docker image
+        env:  # This is REQUIRED
+          READ_REPO_USER: ${{ secrets.READ_REPO_USER }}
+          READ_REPO_TOKEN: ${{ secrets.READ_REPO_TOKEN }}
+        run: |
+          docker buildx build \
+            --platform ${{ contains(fromJSON('["staging", "main", "production"]'), github.ref_name) && 'linux/amd64,linux/arm64' || 'linux/amd64' }}\
+            --tag ${REGISTRY}/${OWNER}/${DOCKER_IMAGE_NAME}:${DOCKER_TAG} \
+            --cache-from type=registry,ref=${CACHE_REGISTRY}/${OWNER}/${DOCKER_IMAGE_NAME}:${CI_COMMIT_REF_NAME}-build_cache\
+            --cache-to type=registry,ref=${CACHE_REGISTRY}/${OWNER}/${DOCKER_IMAGE_NAME}:${CI_COMMIT_REF_NAME}-build_cache,mode=max \
+            --push \
+            --secret id=read_repo_user,env=READ_REPO_USER \
+            --secret id=read_repo_token,env=READ_REPO_TOKEN \
+            -f Dockerfile \
+            .
+
+  update-config-repo:
+    name: Update Config Repo
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: build-and-push # This job depends on the build-and-push job
+    env:
+      HELM_VALUE_FILE_PATH: ${{needs.build-and-push.outputs.ref_name}}/${{github.event.repository.name}}/values.yaml
+    steps:
+      - name: Get env
+        run: |
+          echo "IMAGE_TAG=${{needs.build-and-push.outputs.image_tag}}" >> $GITHUB_ENV
+          echo "CI_COMMIT_REF_NAME=${{needs.build-and-push.outputs.ref_name}}" >> $GITHUB_ENV
+
+      - name: Show env
+        run: |
+          echo "${{env.IMAGE_TAG}}"
+          echo "${{env.CI_COMMIT_REF_NAME}}"
+
+      # Checkout the config repo
+      - name: Checkout Config Repo
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ secrets.CONFIG_REPO }}
+          ref: main # Branch in config repo to update
+          token: ${{ secrets.CONFIG_REPO_TOKEN }} # PAT with access to config repo
+
+      - name: Update Values with yq (Go)
+        uses: mikefarah/yq@master
+        with:
+          cmd: |
+            yq eval '.image.tag = "${{env.IMAGE_TAG}}"' -i ${{env.HELM_VALUE_FILE_PATH}}
+
+      - name: Add changes
+        run: git add ${{env.HELM_VALUE_FILE_PATH}}
+
+      - name: Config Git User
+        run: |
+          git config user.name "Gitea Action"
+          git config user.email "cicd-gitea@example.com"
+
+      - name: Commit changes
+        run: git commit -m "Update ${{github.event.repository.name}} ${{env.CI_COMMIT_REF_NAME}} image tag to ${{ env.IMAGE_TAG }} with source commit message :${{ github.event.head_commit.message }}"
+
+      - name: Push changes
+        run: git push
