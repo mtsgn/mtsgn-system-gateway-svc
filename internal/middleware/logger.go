@@ -7,8 +7,8 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/mtsgn/mtsgn-mtsgn-system-common-svc/common/logger"
 	"github.com/google/uuid"
+	"github.com/mtsgn/mtsgn-mtsgn-system-common-svc/common/logger"
 	"github.com/mtsgn/mtsgn-system-gateway-svc/pkg/utils"
 )
 
