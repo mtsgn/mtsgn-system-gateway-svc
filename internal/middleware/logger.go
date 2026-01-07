@@ -7,9 +7,9 @@ import (
 	"net/http"
 	"time"
 
-	"gitea.solu-m.io/smart-pos/proposal-gateway-architect/pkg/utils"
-	"gitea.solu-m.io/smart-pos/sp-system-common-svc/common/logger"
+	"github.com/mtsgn/mtsgn-mtsgn-system-common-svc/common/logger"
 	"github.com/google/uuid"
+	"github.com/mtsgn/mtsgn-system-gateway-svc/pkg/utils"
 )
 
 // Logger logs HTTP requests with status code, method, and duration

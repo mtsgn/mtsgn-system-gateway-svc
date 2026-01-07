@@ -7,7 +7,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"gitea.solu-m.io/smart-pos/proposal-gateway-architect/pkg/config"
+	"github.com/mtsgn/mtsgn-system-gateway-svc/pkg/config"
 	"github.com/redis/go-redis/v9"
 )
 

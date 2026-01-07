@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"gitea.solu-m.io/smart-pos/proposal-gateway-architect/pkg/utils"
+	"github.com/mtsgn/mtsgn-system-gateway-svc/pkg/utils"
 )
 
 // ==================== Rate Limiting Middleware ====================

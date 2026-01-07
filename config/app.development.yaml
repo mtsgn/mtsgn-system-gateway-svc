@@ -20,19 +20,9 @@ rate_limit:
   burst: 10
 
 services:
-  - name: "sp-sale-reporting-svc"
-    base_path: "/api/v1/sale-reporting"
-    target: "http://localhost:8000"
-    methods: ["GET", "POST", "PUT", "DELETE"]
-    rate_limit: 100
   - name: "sp-system-gateway-svc"
     base_path: "/*"
     target: "http://localhost:3001"
-    methods: ["GET", "POST", "PUT", "DELETE"]
-    rate_limit: 100
-  - name: "sp-store-info-svc"
-    base_path: "/api/v1/stores/*"
-    target: "http://localhost:3002"
     methods: ["GET", "POST", "PUT", "DELETE"]
     rate_limit: 100
   - name: "sp-access-auth-svc"
@@ -48,81 +38,6 @@ services:
     rate_limit: 100
   - name: "sp-access-rolepermission-svc"
     base_path: "/api/v1/role-permission/*"
-    target: "http://localhost:3002"
-    methods: ["GET", "POST", "PUT", "DELETE"]
-    rate_limit: 100
-  - name: "sp-company-profile-svc"
-    base_path: "/api/v1/companies/*"
-    target: "http://localhost:3002"
-    methods: ["GET", "POST", "PUT", "DELETE"]
-    rate_limit: 100
-  - name: "sp-store-shift-svc"
-    base_path: "/api/v1/store-shift/*"
-    target: "http://localhost:3002"
-    methods: ["GET", "POST", "PUT", "DELETE"]
-    rate_limit: 100
-  - name: "sp-category-core-svc"
-    base_path: "/api/v1/categories/company/*"
-    target: "http://localhost:3002"
-    methods: ["GET", "POST", "PUT", "DELETE"]
-    rate_limit: 100
-  - name: "sp-member-segmentation-svc"
-    base_path: "/api/v1/member-segmentation/*"
-    target: "http://localhost:3002"
-    methods: ["GET", "POST", "PUT", "DELETE"]
-    rate_limit: 100
-  - name: "sp-inventory-stock-svc"
-    base_path: "/api/v1/inventory-stock/*"
-    target: "http://localhost:3002"
-    methods: ["GET", "POST", "PUT", "DELETE"]
-    rate_limit: 100
-  - name: "sp-inventory-transfer-svc"
-    base_path: "/api/v1/inventory-transfer/*"
-    target: "http://localhost:3002"
-    methods: ["GET", "POST", "PUT", "DELETE"]
-    rate_limit: 100
-  - name: "sp-member-profile-svc"
-    base_path: "/api/v1/member-profile/*"
-    target: "http://localhost:3002"
-    methods: ["GET", "POST", "PUT", "DELETE"]
-    rate_limit: 100
-  - name: "sp-product-core-svc"
-    base_path: "/api/v1/product-core/*"
-    target: "http://localhost:3002"
-    methods: ["GET", "POST", "PUT", "DELETE"]
-    rate_limit: 100
-  - name: "sp-product-import-svc"
-    base_path: "/api/v1/product-import/*"
-    target: "http://localhost:3002"
-    methods: ["GET", "POST", "PUT", "DELETE"]
-    rate_limit: 100
-  - name: "sp-promotion-core-svc"
-    base_path: "/api/v1/promotion/*"
-    target: "http://localhost:3002"
-    methods: ["GET", "POST", "PUT", "DELETE"]
-    rate_limit: 100
-  - name: "sp-purchase-order-svc"
-    base_path: "/api/v1/purchase-order/*"
-    target: "http://localhost:3002"
-    methods: ["GET", "POST", "PUT", "DELETE"]
-    rate_limit: 100
-  - name: "sp-store-pos-svc"
-    base_path: "/api/v1/pos-devices/*"
-    target: "http://localhost:3002"
-    methods: ["GET", "POST", "PUT", "DELETE"]
-    rate_limit: 100
-  - name: "sp-system-file-svc"
-    base_path: "/api/v1/files/*"
-    target: "http://localhost:3002"
-    methods: ["GET", "POST", "PUT", "DELETE"]
-    rate_limit: 100
-  - name: "sp-system-file-svc"
-    base_path: "/api/v1/internal/files/*"
-    target: "http://localhost:3002"
-    methods: ["GET", "POST", "PUT", "DELETE"]
-    rate_limit: 100
-  - name: "sp-system-notification-svc"
-    base_path: "/api/v1/notifications/*"
     target: "http://localhost:3002"
     methods: ["GET", "POST", "PUT", "DELETE"]
     rate_limit: 100

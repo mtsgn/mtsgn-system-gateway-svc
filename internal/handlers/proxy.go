@@ -9,10 +9,10 @@ import (
 	"strings"
 	"time"
 
-	"gitea.solu-m.io/smart-pos/proposal-gateway-architect/internal/server"
-	"gitea.solu-m.io/smart-pos/proposal-gateway-architect/pkg/config"
-	rds "gitea.solu-m.io/smart-pos/proposal-gateway-architect/pkg/redis"
-	"gitea.solu-m.io/smart-pos/sp-system-common-svc/common/logger"
+	"github.com/mtsgn/mtsgn-mtsgn-system-common-svc/common/logger"
+	"github.com/mtsgn/mtsgn-system-gateway-svc/internal/server"
+	"github.com/mtsgn/mtsgn-system-gateway-svc/pkg/config"
+	rds "github.com/mtsgn/mtsgn-system-gateway-svc/pkg/redis"
 )
 
 type ProxyHandler struct {

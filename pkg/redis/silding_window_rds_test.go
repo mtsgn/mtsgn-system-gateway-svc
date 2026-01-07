@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"gitea.solu-m.io/smart-pos/proposal-gateway-architect/pkg/config"
 	"github.com/alicebob/miniredis/v2"
+	"github.com/mtsgn/mtsgn-system-gateway-svc/pkg/config"
 	"github.com/redis/go-redis/v9"
 )
 

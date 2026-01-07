@@ -27,7 +27,7 @@ Client → API Gateway → Microservices
 
 1. Clone the repository:
 ```bash
-git clone https://gitea.solu-m.io/smart-pos/proposal-gateway-architect
+git clone https://github.com/mtsgn/mtsgn-system-gateway-svc
 cd api-gateway
 ```
 
@@ -323,5 +323,5 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## Author
 
-gitea.solu-m.io/smart-pos/proposal-gateway-architectpham
+github.com/mtsgn/mtsgn-system-gateway-svc
 

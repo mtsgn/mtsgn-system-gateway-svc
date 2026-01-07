@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"aidanwoods.dev/go-paseto"
-	"gitea.solu-m.io/smart-pos/proposal-gateway-architect/internal/server"
-	"gitea.solu-m.io/smart-pos/proposal-gateway-architect/pkg/config"
+	"github.com/mtsgn/mtsgn-system-gateway-svc/internal/server"
+	"github.com/mtsgn/mtsgn-system-gateway-svc/pkg/config"
 )
 
 func (p *ProxyHandler) authorizationMiddleware(w http.ResponseWriter, r *http.Request, cfg *config.Config, service *server.ServiceConfig) error {
